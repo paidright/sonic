@@ -21,7 +21,13 @@ import (
 var queue kewpie.Kewpie
 
 func init() {
+	if len(os.Args) > 1 && os.Args[1] == "--version" {
+		fmt.Println(currentVersion)
+		os.Exit(0)
+	}
 	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE})
+
+	fmt.Printf("INFO listening on queue: %s \n", config.QUEUE)
 }
 
 type cliHandler struct {

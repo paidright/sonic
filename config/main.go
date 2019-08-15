@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/davidbanham/required_env"
@@ -21,6 +20,4 @@ func init() {
 	KEWPIE_BACKEND = os.Getenv("KEWPIE_BACKEND")
 	QUEUE = os.Getenv("QUEUE")
 	RETRY = os.Getenv("RETRY") == "true"
-
-	fmt.Printf("INFO listening on queue: %s \n", QUEUE)
 }
