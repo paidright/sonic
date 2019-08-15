@@ -138,3 +138,30 @@ func TestWebhooks(t *testing.T) {
 
 	cancel()
 }
+
+func TestInvalidWebhooks(t *testing.T) {
+	uniq := uuid.NewV4().String()
+	path := "/tmp/" + uniq
+
+	payload := kewpie.Task{
+		Body: "echo " + uniq,
+		Tags: kewpie.Tags{
+			"webhook_start":   "/dev/null",
+			"webhook_error":   "/dev/null",
+			"webhook_success": "/dev/null",
+		},
+	}
+
+	queue.Publish(context.Background(), config.QUEUE, &payload)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go subscribe(ctx)
+
+	time.Sleep(10 * time.Millisecond)
+
+	if _, err := os.Open(path); err == nil {
+		t.Fatal("The task ran and it shouldn't have")
+	}
+
+	cancel()
+}

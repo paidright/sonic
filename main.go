@@ -125,6 +125,11 @@ func sendWebhook(event string, task kewpie.Task) error {
 
 	res, err := http.Post(task.Tags[tagName], "application/json", bytes.NewReader(payload))
 
+	if err != nil {
+		log.Printf("ERROR webhook error %+v\n", err)
+		return ErrWebhookServerFailed
+	}
+
 	if res.StatusCode == 400 {
 		return ErrWebhookBadRequest
 	}
