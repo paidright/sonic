@@ -86,6 +86,9 @@ func subscribe(ctx context.Context) error {
 		},
 	}
 
+	if config.SINGLE_SHOT {
+		return queue.Pop(ctx, config.QUEUE, handler)
+	}
 	return queue.Subscribe(ctx, config.QUEUE, handler)
 }
 

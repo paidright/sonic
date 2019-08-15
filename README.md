@@ -22,7 +22,12 @@ You must declare the queue you wish to listen to, the kewpie backend to use, whe
 export DB_URI=postgres://kewpie:wut@localhost:5432/kewpie?sslmode=disable
 export KEWPIE_BACKEND=postgres
 export QUEUE=lolhai
+export RETRY=true
+export SINGLE_SHOT=false
 ```
+
+`RETRY` controls whether or not a task that failed (exited > 0) will be retried
+`SINGLE_SHOT` mode tells Sonic to exit its own process after handling its first task and not look for a second one
 
 ### Using it
 
