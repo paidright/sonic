@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	kewpie "github.com/davidbanham/kewpie_go"
 	"github.com/davidbanham/kewpie_go/types"
@@ -60,8 +61,14 @@ var ErrWebhookServerFailed = fmt.Errorf("The upstream server failed when trying 
 var ErrWebhookBadRequest = fmt.Errorf("The upstream server indicated the request was bad.")
 
 func subscribe(ctx context.Context) error {
+	running := false
+
 	handler := cliHandler{
 		handleFunc: func(task kewpie.Task) (bool, error) {
+			running = true
+			defer func() {
+				running = false
+			}()
 			if err := sendWebhook("start", task); err == ErrWebhookServerFailed {
 				log.Printf("ERROR webhook error will requeue for task %+v\n", task)
 				return true, err
@@ -84,6 +91,17 @@ func subscribe(ctx context.Context) error {
 			}
 			return false, nil
 		},
+	}
+
+	if config.DIE_IF_IDLE {
+		go func() {
+			for {
+				time.Sleep(config.MAX_IDLE)
+				if !running {
+					os.Exit(0)
+				}
+			}
+		}()
 	}
 
 	if config.SINGLE_SHOT {
