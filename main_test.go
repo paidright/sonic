@@ -18,12 +18,11 @@ import (
 )
 
 func TestRunProc(t *testing.T) {
-	uniq := uuid.NewV4().String()
-	path := "/tmp/" + uniq
+	_, path := getPathForTest()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	assert.Nil(t, runProc(ctx, "touch "+path))
+	assert.Nil(t, runProc(ctx, "touch  "+path))
 	_, err := os.Open(path)
 	assert.Nil(t, err)
 	assert.Nil(t, os.Remove(path))
@@ -31,9 +30,24 @@ func TestRunProc(t *testing.T) {
 	cancel()
 }
 
+func TestRunProcWithNoArguments(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	assert.Nil(t, runProc(ctx, "pwd"))
+	cancel()
+}
+
+func TestRunProcWithNoCmd(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	err := runProc(ctx, "")
+	assert.Error(t, err)
+
+	cancel()
+}
+
 func TestSubscribe(t *testing.T) {
-	uniq := uuid.NewV4().String()
-	path := "/tmp/" + uniq
+	_, path := getPathForTest()
 
 	payload := kewpie.Task{
 		Body: "touch " + path,
@@ -53,9 +67,42 @@ func TestSubscribe(t *testing.T) {
 	cancel()
 }
 
+func TestWebhookWithMissingTag(t *testing.T) {
+	payload := kewpie.Task{
+		Body: "",
+		Tags: kewpie.Tags{},
+	}
+
+	err := sendWebhook(startWebhook, payload)
+	assert.Nil(t, err)
+}
+
+func TestWebhookWithMalformedUrl(t *testing.T) {
+	payload := kewpie.Task{
+		Body: "",
+		Tags: kewpie.Tags{
+			"webhook_start": "http:/localhost",
+		},
+	}
+
+	err := sendWebhook(startWebhook, payload)
+	assert.Error(t, err, ErrWebhookServerFailed)
+}
+
+func TestWebhookWithTimeout(t *testing.T) {
+	payload := kewpie.Task{
+		Body: "",
+		Tags: kewpie.Tags{
+			"webhook_start": "http://localhost:3000",
+		},
+	}
+
+	err := sendWebhook(startWebhook, payload)
+	assert.Error(t, err, ErrWebhookServerFailed)
+}
+
 func TestWebhooks(t *testing.T) {
-	uniq := uuid.NewV4().String()
-	path := "/tmp/" + uniq
+	uniq, path := getPathForTest()
 
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
@@ -164,4 +211,15 @@ func TestInvalidWebhooks(t *testing.T) {
 	}
 
 	cancel()
+}
+
+/*
+ * Simple utility method that provides the test with a path
+ * to write data to.
+ */
+func getPathForTest() (string, string) {
+	uniq := uuid.NewV4().String()
+	path := "/tmp/" + uniq
+
+	return uniq, path
 }

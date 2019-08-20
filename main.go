@@ -10,13 +10,23 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"strings"
+	"regexp"
 	"syscall"
 	"time"
 
 	kewpie "github.com/davidbanham/kewpie_go"
 	"github.com/davidbanham/kewpie_go/types"
 	"github.com/paidright/sonic/config"
+)
+
+// Webhook is a callback Sonic uses to inform the creator of the
+// original message what the status of the asynchronous command is
+type Webhook string
+
+const (
+	startWebhook   Webhook = "start"
+	successWebhook         = "success"
+	failWebhook            = "fail"
 )
 
 var queue kewpie.Kewpie
@@ -57,8 +67,11 @@ func main() {
 	}
 }
 
-var ErrWebhookServerFailed = fmt.Errorf("The upstream server failed when trying to send the start webhook.")
-var ErrWebhookBadRequest = fmt.Errorf("The upstream server indicated the request was bad.")
+// ErrWebhookServerFailed is returned as the catch all error on a callback.
+var ErrWebhookServerFailed = fmt.Errorf("The upstream server failed when trying to send the start webhook")
+
+// ErrWebhookBadRequest is returned when sonic issues a callback which returns an Http 400 code
+var ErrWebhookBadRequest = fmt.Errorf("The upstream server indicated the request was bad")
 
 func subscribe(ctx context.Context) error {
 	running := false
@@ -69,7 +82,7 @@ func subscribe(ctx context.Context) error {
 			defer func() {
 				running = false
 			}()
-			if err := sendWebhook("start", task); err == ErrWebhookServerFailed {
+			if err := sendWebhook(startWebhook, task); err == ErrWebhookServerFailed {
 				log.Printf("ERROR webhook error will requeue for task %+v\n", task)
 				return true, err
 			} else if err == ErrWebhookBadRequest {
@@ -81,12 +94,12 @@ func subscribe(ctx context.Context) error {
 			}
 
 			if err := runProc(ctx, task.Body); err != nil {
-				if err := sendWebhook("fail", task); err != nil {
+				if err := sendWebhook(failWebhook, task); err != nil {
 					log.Printf("ERROR sending failure webhook for task %+v\n", task)
 				}
 				return config.RETRY, err
 			}
-			if err := sendWebhook("success", task); err != nil {
+			if err := sendWebhook(successWebhook, task); err != nil {
 				log.Printf("ERROR sending success webhook for task %+v\n", task)
 			}
 			return false, nil
@@ -110,16 +123,30 @@ func subscribe(ctx context.Context) error {
 	return queue.Subscribe(ctx, config.QUEUE, handler)
 }
 
+/*
+ * Run a command in the container. Output is piped to
+ * stdout, and errors to stderr.
+ */
 func runProc(ctx context.Context, cli string) error {
-	parts := strings.Split(cli, " ")
-	command := parts[0]
-	args := parts[1:]
+	command, args := getCommandAndArgs(cli)
 	cmd := exec.CommandContext(ctx, command, args...)
-
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
+}
+
+/*
+ * Load command and arguments from the cli text. Golang is very forgiving
+ * when it parses the string, even handling empty strings!
+ */
+func getCommandAndArgs(cli string) (string, []string) {
+	regXp := regexp.MustCompile(`\s+`)
+	parts := regXp.Split(cli, -1)
+	command := parts[0]
+	args := parts[1:]
+
+	return command, args
 }
 
 func contextWithSigterm(ctx context.Context) context.Context {
@@ -144,8 +171,8 @@ func contextWithSigterm(ctx context.Context) context.Context {
  * of Sonic's execution via 3 webhooks, start, fail and success which
  * issues a HTTP post to an end point defined in the task.Tags map.
  */
-func sendWebhook(event string, task kewpie.Task) error {
-	tagName := "webhook_" + event
+func sendWebhook(event Webhook, task kewpie.Task) error {
+	tagName := "webhook_" + string(event)
 	if task.Tags[tagName] == "" {
 		return nil
 	}
