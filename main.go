@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	kewpie "github.com/davidbanham/kewpie_go"
 	"github.com/davidbanham/kewpie_go/types"
@@ -21,7 +22,13 @@ import (
 var queue kewpie.Kewpie
 
 func init() {
+	if len(os.Args) > 1 && os.Args[1] == "--version" {
+		fmt.Println(currentVersion)
+		os.Exit(0)
+	}
 	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE})
+
+	fmt.Printf("INFO listening on queue: %s \n", config.QUEUE)
 }
 
 type cliHandler struct {
@@ -54,8 +61,14 @@ var ErrWebhookServerFailed = fmt.Errorf("The upstream server failed when trying 
 var ErrWebhookBadRequest = fmt.Errorf("The upstream server indicated the request was bad.")
 
 func subscribe(ctx context.Context) error {
+	running := false
+
 	handler := cliHandler{
 		handleFunc: func(task kewpie.Task) (bool, error) {
+			running = true
+			defer func() {
+				running = false
+			}()
 			if err := sendWebhook("start", task); err == ErrWebhookServerFailed {
 				log.Printf("ERROR webhook error will requeue for task %+v\n", task)
 				return true, err
@@ -80,6 +93,20 @@ func subscribe(ctx context.Context) error {
 		},
 	}
 
+	if config.DIE_IF_IDLE {
+		go func() {
+			for {
+				time.Sleep(config.MAX_IDLE)
+				if !running {
+					os.Exit(0)
+				}
+			}
+		}()
+	}
+
+	if config.SINGLE_SHOT {
+		return queue.Pop(ctx, config.QUEUE, handler)
+	}
 	return queue.Subscribe(ctx, config.QUEUE, handler)
 }
 
@@ -127,8 +154,8 @@ func sendWebhook(event string, task kewpie.Task) error {
 	res, err := http.Post(task.Tags[tagName], "application/json", bytes.NewReader(payload))
 
 	if err != nil {
-		log.Printf("ERROR sending webhook %+v\n", err)
-		return err
+		log.Printf("ERROR webhook error %+v\n", err)
+		return ErrWebhookServerFailed
 	}
 
 	if res.StatusCode == 400 {
