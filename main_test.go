@@ -103,14 +103,7 @@ func TestWebhookWithTimeout(t *testing.T) {
 
 func TestWebhookWithBadRequest(t *testing.T) {
 	_, path := getPathForTest()
-
-	listener, err := net.Listen("tcp", ":0")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
-
+	listener, port := createListener(t)
 	go (func() {
 		assert.Nil(t, http.Serve(listener, nil))
 	})()
@@ -148,14 +141,7 @@ func TestWebhookWithBadRequest(t *testing.T) {
 
 func TestWebhookWithFailedRequest(t *testing.T) {
 	_, path := getPathForTest()
-
-	listener, err := net.Listen("tcp", ":0")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
-
+	listener, port := createListener(t)
 	go (func() {
 		assert.Nil(t, http.Serve(listener, nil))
 	})()
@@ -192,14 +178,7 @@ func TestWebhookWithFailedRequest(t *testing.T) {
 
 func TestWebhookWithSuccess(t *testing.T) {
 	uniq, path := getPathForTest()
-
-	listener, err := net.Listen("tcp", ":0")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
-
+	listener, port := createListener(t)
 	go (func() {
 		assert.Nil(t, http.Serve(listener, nil))
 	})()
@@ -271,6 +250,21 @@ func TestInvalidWebhooks(t *testing.T) {
 	}
 
 	cancel()
+}
+
+/*
+ * Create a listener on a port for the go http server to bind
+ * on. Utility function is used by the tests above.
+ */
+func createListener(t *testing.T) (net.Listener, string) {
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
+
+	return listener, port
 }
 
 /*
