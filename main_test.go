@@ -101,7 +101,96 @@ func TestWebhookWithTimeout(t *testing.T) {
 	assert.Error(t, err, ErrWebhookServerFailed)
 }
 
-func TestWebhooks(t *testing.T) {
+func TestWebhookWithBadRequest(t *testing.T) {
+	_, path := getPathForTest()
+
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
+
+	go (func() {
+		assert.Nil(t, http.Serve(listener, nil))
+	})()
+
+	called := map[string]bool{}
+
+	http.HandleFunc("/dont_start", func(w http.ResponseWriter, r *http.Request) {
+		called["dont_start"] = true
+		w.WriteHeader(http.StatusBadRequest)
+	})
+
+	payloadNoRun := kewpie.Task{
+		Body: "touch " + path,
+		Tags: kewpie.Tags{
+			"webhook_start":   "http://localhost:" + port + "/dont_start",
+			"webhook_success": "http://localhost:" + port + "/success",
+		},
+	}
+
+	queue.Publish(context.Background(), config.QUEUE, &payloadNoRun)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go subscribe(ctx)
+
+	time.Sleep(10 * time.Millisecond)
+
+	if _, err := os.Open(path); err == nil {
+		t.Fatal("The task ran and it shouldn't have")
+	}
+
+	assert.True(t, called["dont_start"])
+
+	cancel()
+}
+
+func TestWebhookWithFailedRequest(t *testing.T) {
+	_, path := getPathForTest()
+
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
+
+	go (func() {
+		assert.Nil(t, http.Serve(listener, nil))
+	})()
+
+	called := map[string]bool{}
+
+	http.HandleFunc("/fail", func(w http.ResponseWriter, r *http.Request) {
+		called["fail"] = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	failPayload := kewpie.Task{
+		Body: "exit 1",
+		Tags: kewpie.Tags{
+			"webhook_fail": "http://localhost:" + port + "/fail",
+		},
+	}
+
+	queue.Publish(context.Background(), config.QUEUE, &failPayload)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go subscribe(ctx)
+
+	time.Sleep(10 * time.Millisecond)
+
+	if _, err := os.Open(path); err == nil {
+		t.Fatal("The task ran and it shouldn't have")
+	}
+
+	assert.True(t, called["fail"])
+
+	cancel()
+}
+
+func TestWebhookWithSuccess(t *testing.T) {
 	uniq, path := getPathForTest()
 
 	listener, err := net.Listen("tcp", ":0")
@@ -127,18 +216,8 @@ func TestWebhooks(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	http.HandleFunc("/dont_start", func(w http.ResponseWriter, r *http.Request) {
-		called["dont_start"] = true
-		w.WriteHeader(http.StatusBadRequest)
-	})
-
 	http.HandleFunc("/success", func(w http.ResponseWriter, r *http.Request) {
 		called["success"] = true
-		w.WriteHeader(http.StatusOK)
-	})
-
-	http.HandleFunc("/fail", func(w http.ResponseWriter, r *http.Request) {
-		called["fail"] = true
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -150,24 +229,7 @@ func TestWebhooks(t *testing.T) {
 		},
 	}
 
-	payloadNoRun := kewpie.Task{
-		Body: "touch " + path,
-		Tags: kewpie.Tags{
-			"webhook_start":   "http://localhost:" + port + "/dont_start",
-			"webhook_success": "http://localhost:" + port + "/success",
-		},
-	}
-
-	failPayload := kewpie.Task{
-		Body: "exit 1",
-		Tags: kewpie.Tags{
-			"webhook_fail": "http://localhost:" + port + "/fail",
-		},
-	}
-
 	queue.Publish(context.Background(), config.QUEUE, &payload)
-	queue.Publish(context.Background(), config.QUEUE, &payloadNoRun)
-	queue.Publish(context.Background(), config.QUEUE, &failPayload)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go subscribe(ctx)
@@ -180,8 +242,6 @@ func TestWebhooks(t *testing.T) {
 
 	assert.True(t, called["start"])
 	assert.True(t, called["success"])
-	assert.True(t, called["fail"])
-	assert.True(t, called["dont_start"])
 
 	cancel()
 }
