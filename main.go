@@ -77,6 +77,12 @@ var ErrWebhookBadRequest = fmt.Errorf("The upstream server indicated the request
 // ErrUnknownWebhook is returned when a user specifies an event unknown to Kewpie
 var ErrUnknownWebhook = fmt.Errorf("Unknown web hook")
 
+/*
+ * Subscribe to messages from the corresponding Kewpie queue. Initially signal that the requested
+ * task has "started" meaning Sonic is ready to call the requested process. Sonic then calls the
+ * process, if this fails it signals a fail via the webhook. If the process completes with a graceful
+ * exit code, then Sonic signals a success via the webhook.
+ */
 func subscribe(ctx context.Context) error {
 	running := false
 
@@ -86,15 +92,10 @@ func subscribe(ctx context.Context) error {
 			defer func() {
 				running = false
 			}()
-			if err := sendWebhook(startWebhook, task); err == ErrWebhookServerFailed {
-				log.Printf("ERROR webhook error will requeue for task %+v\n", task)
-				return true, err
-			} else if err == ErrWebhookBadRequest {
-				log.Printf("INFO abort signal received for task %+v\n", task)
-				return false, err
-			} else if err != nil {
-				log.Printf("ERROR dealing with start webhook will not requeue for task %+v\n", task)
-				return false, err
+
+			requeue, err := signalTaskStart(task)
+			if err != nil {
+				return requeue, err
 			}
 
 			if err := runProc(ctx, task.Body); err != nil {
@@ -138,6 +139,24 @@ func runProc(ctx context.Context, cli string) error {
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
+}
+
+/*
+ * Signal that the task is about to commence. The bool tells Kewpie whether the
+ * task needs to be requeued
+ */
+func signalTaskStart(task kewpie.Task) (bool, error) {
+	if err := sendWebhook(startWebhook, task); err == ErrWebhookServerFailed {
+		log.Printf("ERROR webhook error will requeue for task %+v\n", task)
+		return true, err
+	} else if err == ErrWebhookBadRequest {
+		log.Printf("INFO abort signal received for task %+v\n", task)
+		return false, err
+	} else if err != nil {
+		log.Printf("ERROR dealing with start webhook will not requeue for task %+v\n", task)
+		return false, err
+	}
+	return false, nil
 }
 
 /*
