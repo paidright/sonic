@@ -43,7 +43,7 @@ Sonic will check the Tags attribute of a Kewpie task for webhooks to call on sta
   "tags": {
     "webhook_start": "http://example.com/telemetry/start",
     "webhook_success": "http://example.com/telemetry/success",
-    "webhook_error": "http://example.com/telemetry/error",
+    "webhook_fail": "http://example.com/telemetry/error",
   }
 }
 ```

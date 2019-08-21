@@ -1,3 +1,3 @@
 package main
 
-const currentVersion = "e9c8cdd8f7a53d1fba6cf0f9e37c03ee9fe984de"
+const currentVersion = "4ae069c782813b633fa32051dd02b477397db462"
