@@ -93,19 +93,24 @@ func subscribe(ctx context.Context) error {
 				running = false
 			}()
 
+			// Signal start
 			if requeue, err := signalTaskStart(task); err != nil {
 				return requeue, err
 			}
 
+			// Run proc, signal fail if it does fail
 			if err := runProc(ctx, task.Body); err != nil {
 				if err := sendWebhook(failWebhook, task); err != nil {
 					log.Printf("ERROR sending failure webhook for task %+v\n", task)
 				}
 				return config.RETRY, err
 			}
+
+			// Signal success/complete
 			if err := sendWebhook(successWebhook, task); err != nil {
 				log.Printf("ERROR sending success webhook for task %+v\n", task)
 			}
+
 			return false, nil
 		},
 	}
