@@ -67,6 +67,16 @@ func TestSubscribe(t *testing.T) {
 	cancel()
 }
 
+func TestUnknownWebhook(t *testing.T) {
+	payload := kewpie.Task{
+		Body: "",
+		Tags: kewpie.Tags{},
+	}
+
+	err := sendWebhook(-1, payload)
+	assert.Error(t, err)
+}
+
 func TestWebhookWithMissingTag(t *testing.T) {
 	payload := kewpie.Task{
 		Body: "",

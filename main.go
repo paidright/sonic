@@ -21,12 +21,13 @@ import (
 
 // Webhook is a callback Sonic uses to inform the creator of the
 // original message what the status of the asynchronous command is
-type Webhook string
+type Webhook int
 
 const (
-	startWebhook   Webhook = "start"
-	successWebhook         = "success"
-	failWebhook            = "fail"
+	_ = iota // Ignore first value
+	startWebhook
+	successWebhook
+	failWebhook
 )
 
 var queue kewpie.Kewpie
@@ -72,6 +73,9 @@ var ErrWebhookServerFailed = fmt.Errorf("The upstream server failed when trying 
 
 // ErrWebhookBadRequest is returned when sonic issues a callback which returns an Http 400 code
 var ErrWebhookBadRequest = fmt.Errorf("The upstream server indicated the request was bad")
+
+// ErrUnknownWebhook is returned when a user specifies an event unknown to Kewpie
+var ErrUnknownWebhook = fmt.Errorf("Unknown web hook")
 
 func subscribe(ctx context.Context) error {
 	running := false
@@ -172,7 +176,12 @@ func contextWithSigterm(ctx context.Context) context.Context {
  * issues a HTTP post to an end point defined in the task.Tags map.
  */
 func sendWebhook(event Webhook, task kewpie.Task) error {
-	tagName := "webhook_" + string(event)
+	evt, err := webhookToString(event)
+	if err != nil {
+		return err
+	}
+
+	tagName := "webhook_" + evt
 	if task.Tags[tagName] == "" {
 		return nil
 	}
@@ -201,4 +210,21 @@ func sendWebhook(event Webhook, task kewpie.Task) error {
 	}
 
 	return ErrWebhookServerFailed
+}
+
+/*
+ * We represent Webhooks a using integers to make the code a bit safer. golang is a bit
+ * loose with it's enums.
+ */
+func webhookToString(hook Webhook) (string, error) {
+	switch hook {
+	case 1:
+		return "start", nil
+	case 2:
+		return "success", nil
+	case 3:
+		return "fail", nil
+	default:
+		return "", ErrUnknownWebhook
+	}
 }
