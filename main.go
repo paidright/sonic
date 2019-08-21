@@ -93,8 +93,7 @@ func subscribe(ctx context.Context) error {
 				running = false
 			}()
 
-			requeue, err := signalTaskStart(task)
-			if err != nil {
+			if requeue, err := signalTaskStart(task); err != nil {
 				return requeue, err
 			}
 
