@@ -171,6 +171,11 @@ func getCommandAndArgs(cli string) (string, []string) {
 	return command, args
 }
 
+/*
+ * Creates a derived (child) context using the parent context. The derived
+ * context is a WithCancel context which prevents the go routine from leaking.
+ * Cancel is deferred and called witht the go routine.
+ */
 func contextWithSigterm(ctx context.Context) context.Context {
 	ctxWithCancel, cancel := context.WithCancel(ctx)
 	go func() {
