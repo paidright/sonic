@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -16,6 +17,7 @@ import (
 
 	kewpie "github.com/davidbanham/kewpie_go"
 	"github.com/davidbanham/kewpie_go/types"
+	"github.com/davidbanham/required_env"
 	"github.com/paidright/sonic/config"
 )
 
@@ -32,12 +34,27 @@ const (
 
 var queue kewpie.Kewpie
 
+var database *sql.DB
+
 func init() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
 		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
 	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE})
+
+	if config.KEWPIE_BACKEND == "postgres" {
+		required_env.Ensure(map[string]string{
+			"DB_URI": "",
+		})
+
+		db, err := sql.Open("postgres", os.Getenv("DB_URI"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		database = db
+	}
 
 	fmt.Printf("INFO listening on queue: %s \n", config.QUEUE)
 }
@@ -98,7 +115,20 @@ func subscribe(ctx context.Context) error {
 				return requeue, err
 			}
 
+			// If we are using postgres as a backend, create a transaction to pass
+			// This is required to ensure that if this process vanishes partway through a job, the job will be handed to another worker
+
+			if config.KEWPIE_BACKEND == "postgres" {
+				tx, err := database.BeginTx(ctx, nil)
+				if err != nil {
+					return config.RETRY, err
+				}
+				ctx = context.WithValue(ctx, "tx", tx)
+				defer tx.Commit()
+			}
+
 			// Run proc, signal fail if it does fail
+
 			if err := runProc(ctx, task.Body); err != nil {
 				if err := sendWebhook(failWebhook, task); err != nil {
 					log.Printf("ERROR sending failure webhook for task %+v\n", task)
