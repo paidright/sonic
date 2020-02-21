@@ -115,18 +115,6 @@ func subscribe(ctx context.Context) error {
 				return requeue, err
 			}
 
-			// If we are using postgres as a backend, create a transaction to pass
-			// This is required to ensure that if this process vanishes partway through a job, the job will be handed to another worker
-
-			if config.KEWPIE_BACKEND == "postgres" {
-				tx, err := database.BeginTx(ctx, nil)
-				if err != nil {
-					return config.RETRY, err
-				}
-				ctx = context.WithValue(ctx, "tx", tx)
-				defer tx.Commit()
-			}
-
 			// Run proc, signal fail if it does fail
 
 			if err := runProc(ctx, task.Body); err != nil {
@@ -144,12 +132,31 @@ func subscribe(ctx context.Context) error {
 			return false, nil
 		},
 	}
+	// If we are using postgres as a backend, create a transaction to pass
+	// This is required to ensure that if this process vanishes partway through a job, the job will be handed to another worker
+
+	if config.KEWPIE_BACKEND == "postgres" {
+		tx, err := database.BeginTx(ctx, nil)
+		if err != nil {
+			return err
+		}
+		ctx = context.WithValue(ctx, "tx", tx)
+		defer tx.Commit()
+	}
 
 	if config.DIE_IF_IDLE {
 		go func() {
 			for {
 				time.Sleep(config.MAX_IDLE)
 				if !running {
+					switch tx := ctx.Value("tx").(type) {
+					case sql.Tx:
+						if err := tx.Commit(); err != nil {
+							log.Println("ERROR committing transaction", err)
+						}
+					default:
+						log.Println("INFO No transaction current")
+					}
 					os.Exit(0)
 				}
 			}
