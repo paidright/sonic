@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	kewpie "github.com/davidbanham/kewpie_go"
+	kewpie "github.com/davidbanham/kewpie_go/v3"
 	"github.com/paidright/sonic/config"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +54,7 @@ func TestSubscribe(t *testing.T) {
 		Body: "touch " + path,
 	}
 
-	queue.Publish(context.Background(), config.QUEUE, &payload)
+	assert.Nil(t, queue.Publish(context.Background(), config.QUEUE, &payload))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go subscribe(ctx)
@@ -65,6 +66,24 @@ func TestSubscribe(t *testing.T) {
 	assert.Nil(t, os.Remove(path))
 
 	cancel()
+}
+
+func TestSubscribeWithFailure(t *testing.T) {
+	t.Skip()
+
+	payload := kewpie.Task{
+		Body: "sleep 120",
+	}
+
+	assert.Nil(t, queue.Publish(context.Background(), config.QUEUE, &payload))
+
+	go subscribe(context.Background())
+
+	time.Sleep(1 * time.Second)
+
+	log.Println("queue is", config.QUEUE)
+	log.Println("Exiting process. Manually check the database to ensure the task is still present")
+	os.Exit(1)
 }
 
 func TestUnknownWebhook(t *testing.T) {

@@ -15,8 +15,8 @@ import (
 	"syscall"
 	"time"
 
-	kewpie "github.com/davidbanham/kewpie_go"
-	"github.com/davidbanham/kewpie_go/types"
+	kewpie "github.com/davidbanham/kewpie_go/v3"
+	"github.com/davidbanham/kewpie_go/v3/types"
 	"github.com/davidbanham/required_env"
 	"github.com/paidright/sonic/config"
 )
@@ -41,7 +41,7 @@ func init() {
 		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
-	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE})
+	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE}, nil)
 
 	if config.KEWPIE_BACKEND == "postgres" {
 		required_env.Ensure(map[string]string{
@@ -131,17 +131,6 @@ func subscribe(ctx context.Context) error {
 
 			return false, nil
 		},
-	}
-	// If we are using postgres as a backend, create a transaction to pass
-	// This is required to ensure that if this process vanishes partway through a job, the job will be handed to another worker
-
-	if config.KEWPIE_BACKEND == "postgres" {
-		tx, err := database.BeginTx(ctx, nil)
-		if err != nil {
-			return err
-		}
-		ctx = context.WithValue(ctx, "tx", tx)
-		defer tx.Commit()
 	}
 
 	if config.DIE_IF_IDLE {
