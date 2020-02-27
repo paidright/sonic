@@ -17,7 +17,6 @@ import (
 
 	kewpie "github.com/davidbanham/kewpie_go/v3"
 	"github.com/davidbanham/kewpie_go/v3/types"
-	"github.com/davidbanham/required_env"
 	"github.com/paidright/sonic/config"
 )
 
@@ -34,27 +33,13 @@ const (
 
 var queue kewpie.Kewpie
 
-var database *sql.DB
-
 func init() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
 		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
+
 	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE}, nil)
-
-	if config.KEWPIE_BACKEND == "postgres" {
-		required_env.Ensure(map[string]string{
-			"DB_URI": "",
-		})
-
-		db, err := sql.Open("postgres", os.Getenv("DB_URI"))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		database = db
-	}
 
 	fmt.Printf("INFO listening on queue: %s \n", config.QUEUE)
 }
