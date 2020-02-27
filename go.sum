@@ -39,6 +39,8 @@ github.com/davidbanham/kewpie_go/v3 v3.0.1 h1:OMedCnw62KeU0kN/25kKfEENqbW18EZJi3
 github.com/davidbanham/kewpie_go/v3 v3.0.1/go.mod h1:PoQ+BQLPPaVQQhQGiBXkJ5wEElhUW4dW40uftwz5q+Y=
 github.com/davidbanham/kewpie_go/v3 v3.0.2 h1:9P/fzanpGgGg2dWxss3nJoRvwtdvv84eA1PN3vgyI2k=
 github.com/davidbanham/kewpie_go/v3 v3.0.2/go.mod h1:o5AhhrqEMUnJys1IjDjvMpGvHmLP2prgRrlEuaLdi10=
+github.com/davidbanham/kewpie_go/v3 v3.0.3 h1:mTEOJ7B2orBgMq7REdUrfJ1otHmSQmBx31pX1wc5RF8=
+github.com/davidbanham/kewpie_go/v3 v3.0.3/go.mod h1:o5AhhrqEMUnJys1IjDjvMpGvHmLP2prgRrlEuaLdi10=
 github.com/davidbanham/required_env v0.0.0-20150902120453-a84628a4c244 h1:FgQ8KQ99RjcMqaTSqmdisj2quuDKlL1x62SoRtZQwqw=
 github.com/davidbanham/required_env v0.0.0-20150902120453-a84628a4c244/go.mod h1:zJVA+kv43obXkwVzNtnVJK9rIUvzRtV+rSe1qXyf4xk=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
