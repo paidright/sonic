@@ -41,7 +41,6 @@ func init() {
 		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
-	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE}, nil)
 
 	if config.KEWPIE_BACKEND == "postgres" {
 		required_env.Ensure(map[string]string{
@@ -55,6 +54,8 @@ func init() {
 
 		database = db
 	}
+
+	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE}, database)
 
 	fmt.Printf("INFO listening on queue: %s \n", config.QUEUE)
 }
