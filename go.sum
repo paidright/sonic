@@ -31,14 +31,6 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/davidbanham/kewpie_go v0.0.0-20190808014024-aca27a066246 h1:Av/A3kYL9x9SSOjXgn7Zt5k2iwkqwFhHTj8ISnbROhQ=
-github.com/davidbanham/kewpie_go v0.0.0-20190808014024-aca27a066246/go.mod h1:fBrGvxFaS1F1GJsd3892srR9gmtYN7z0dxvPI3arkCY=
-github.com/davidbanham/kewpie_go v0.0.0-20190808052539-9e3e815f5691 h1:lNpcbR6PKU/8GVP6eBbgsNgmIvR7OewOEnG0ZpNojIE=
-github.com/davidbanham/kewpie_go v0.0.0-20190808052539-9e3e815f5691/go.mod h1:fBrGvxFaS1F1GJsd3892srR9gmtYN7z0dxvPI3arkCY=
-github.com/davidbanham/kewpie_go/v3 v3.0.1 h1:OMedCnw62KeU0kN/25kKfEENqbW18EZJi3ObjeMVkJQ=
-github.com/davidbanham/kewpie_go/v3 v3.0.1/go.mod h1:PoQ+BQLPPaVQQhQGiBXkJ5wEElhUW4dW40uftwz5q+Y=
-github.com/davidbanham/kewpie_go/v3 v3.0.2 h1:9P/fzanpGgGg2dWxss3nJoRvwtdvv84eA1PN3vgyI2k=
-github.com/davidbanham/kewpie_go/v3 v3.0.2/go.mod h1:o5AhhrqEMUnJys1IjDjvMpGvHmLP2prgRrlEuaLdi10=
 github.com/davidbanham/kewpie_go/v3 v3.0.3 h1:mTEOJ7B2orBgMq7REdUrfJ1otHmSQmBx31pX1wc5RF8=
 github.com/davidbanham/kewpie_go/v3 v3.0.3/go.mod h1:o5AhhrqEMUnJys1IjDjvMpGvHmLP2prgRrlEuaLdi10=
 github.com/davidbanham/required_env v0.0.0-20150902120453-a84628a4c244 h1:FgQ8KQ99RjcMqaTSqmdisj2quuDKlL1x62SoRtZQwqw=
