@@ -31,8 +31,8 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/davidbanham/kewpie_go/v3 v3.0.3 h1:mTEOJ7B2orBgMq7REdUrfJ1otHmSQmBx31pX1wc5RF8=
-github.com/davidbanham/kewpie_go/v3 v3.0.3/go.mod h1:o5AhhrqEMUnJys1IjDjvMpGvHmLP2prgRrlEuaLdi10=
+github.com/davidbanham/kewpie_go/v3 v3.0.4 h1:nh1Wk18CnS2Me1lFOmap9Xfw7/fFOcr3m25Bhop7A/Q=
+github.com/davidbanham/kewpie_go/v3 v3.0.4/go.mod h1:o5AhhrqEMUnJys1IjDjvMpGvHmLP2prgRrlEuaLdi10=
 github.com/davidbanham/required_env v0.0.0-20150902120453-a84628a4c244 h1:FgQ8KQ99RjcMqaTSqmdisj2quuDKlL1x62SoRtZQwqw=
 github.com/davidbanham/required_env v0.0.0-20150902120453-a84628a4c244/go.mod h1:zJVA+kv43obXkwVzNtnVJK9rIUvzRtV+rSe1qXyf4xk=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
