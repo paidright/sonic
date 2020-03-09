@@ -122,7 +122,7 @@ func TestWebhookWithTimeout(t *testing.T) {
 	payload := kewpie.Task{
 		Body: "",
 		Tags: kewpie.Tags{
-			"webhook_start": "http://localhost:3000",
+			"webhook_start": "http://google.com",
 		},
 	}
 
