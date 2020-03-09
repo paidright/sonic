@@ -86,6 +86,57 @@ func TestSubscribeWithFailure(t *testing.T) {
 	os.Exit(1)
 }
 
+func TestSubscribeWithMultipleFailure(t *testing.T) {
+	uniq := uuid.NewV4().String()
+
+	listener, port := createListener(t)
+	go (func() {
+		assert.Nil(t, http.Serve(listener, nil))
+	})()
+
+	called := map[string]int{}
+
+	http.HandleFunc("/"+uniq+"/start", func(w http.ResponseWriter, r *http.Request) {
+		called["start"] = called["start"] + 1
+		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("/"+uniq+"/fail", func(w http.ResponseWriter, r *http.Request) {
+		called["fail"] = called["fail"] + 1
+		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("/"+uniq+"/success", func(w http.ResponseWriter, r *http.Request) {
+		called["success"] = called["success"] + 1
+		w.WriteHeader(http.StatusOK)
+	})
+
+	payload := kewpie.Task{
+		Body: "exit 1",
+		Tags: kewpie.Tags{
+			"webhook_start":   "http://localhost:" + port + "/" + uniq + "/start",
+			"webhook_fail":    "http://localhost:" + port + "/" + uniq + "/fail",
+			"webhook_success": "http://localhost:" + port + "/" + uniq + "/success",
+		},
+	}
+
+	queue.Publish(context.Background(), config.QUEUE, &payload)
+	queue.Publish(context.Background(), config.QUEUE, &payload)
+	queue.Publish(context.Background(), config.QUEUE, &payload)
+	queue.Publish(context.Background(), config.QUEUE, &payload)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go subscribe(ctx)
+
+	time.Sleep(10 * time.Millisecond)
+
+	assert.Equal(t, 4, called["start"])
+	assert.Equal(t, 4, called["fail"])
+	assert.Equal(t, 0, called["success"])
+
+	cancel()
+}
+
 func TestUnknownWebhook(t *testing.T) {
 	payload := kewpie.Task{
 		Body: "",
