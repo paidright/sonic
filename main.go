@@ -41,7 +41,19 @@ func init() {
 
 	queue.Connect(config.KEWPIE_BACKEND, []string{config.QUEUE}, nil)
 
-	fmt.Printf("INFO listening on queue: %s \n", config.QUEUE)
+	log.Printf("INFO listening on queue: %s \n", config.QUEUE)
+
+	go func() {
+		for {
+			if err := queue.Healthy(context.Background()); err != nil {
+				log.Printf("ERROR queue unhealthy: %s \n", err.Error())
+				queue.Disconnect()
+				return
+			}
+			time.Sleep(1 * time.Second)
+			continue
+		}
+	}()
 }
 
 type cliHandler struct {
