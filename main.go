@@ -122,8 +122,9 @@ func subscribe(ctx context.Context) error {
 			}
 
 			// Signal success/complete
-			if err := sendWebhook(successWebhook, task); err != nil {
+			if retry, err := signalTaskSuccess(task); err != nil {
 				log.Printf("ERROR sending success webhook for task %+v\n", task)
+				return config.RETRY && retry, err
 			}
 
 			return false, nil
@@ -181,6 +182,24 @@ func signalTaskStart(task kewpie.Task) (bool, error) {
 		return false, err
 	} else if err != nil {
 		log.Printf("ERROR dealing with start webhook will not requeue for task %+v\n", task)
+		return false, err
+	}
+	return false, nil
+}
+
+/*
+ * Signal that the task has succeeded. The bool tells Kewpie whether the
+ * task needs to be requeued
+ */
+func signalTaskSuccess(task kewpie.Task) (bool, error) {
+	if err := sendWebhook(successWebhook, task); err == ErrWebhookServerFailed {
+		log.Printf("ERROR webhook error will requeue for task %+v\n", task)
+		return true, err
+	} else if err == ErrWebhookBadRequest {
+		log.Printf("INFO abort signal after success received for task %+v\n", task)
+		return false, err
+	} else if err != nil {
+		log.Printf("ERROR dealing with success webhook will not requeue for task %+v\n", task)
 		return false, err
 	}
 	return false, nil
