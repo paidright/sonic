@@ -50,4 +50,6 @@ Sonic will check the Tags attribute of a Kewpie task for webhooks to call on sta
 
 If these are present, Sonic will send a POST payload with the contents of the task.
 
-For the start webhook, if the server returns a `400` error code Sonic will abort the task and not requeue it. If the server returns anything in the `2xx` range the task will be run. Any other response will be treated as an error and Sonic will abort this run of the task and requeue it to be retried.
+For the start webhook, if the server returns a `400` error code Sonic will abort the task and not requeue it. If the server returns anything in the `2xx` range the task will continue. Any other response will be treated as an error and Sonic will abort this run of the task and requeue it to be retried.
+
+For the success webhook, if the server returns a `400` error code Sonic will abandon the task and not requeue it. If the server returns anything in the `2xx` range the task will be acked and removed from the queue. Any other response will be treated as an error and Sonic will abort this run of the task and requeue it to be retried if the global retry flag is set to true. If the global retry is set to false we assume that the tasks on this queue are non-idempotent and we should not retry.
